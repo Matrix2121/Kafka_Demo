@@ -1,0 +1,11 @@
+[Dd]ebug/
+[Rr]elease/
+bin/
+obj/
+
+.vs/
+*.user
+*.suo
+
+.env
+!.env.example

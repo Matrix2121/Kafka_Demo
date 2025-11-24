@@ -1,0 +1,130 @@
+﻿using Confluent.Kafka;
+
+namespace Kafka_Consumers
+{
+    class prices_data_warehouse_archiver
+    {
+        private static readonly string BOOTSTRAP_SERVERS = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
+        private const int CONSUME_TIMEOUT_MS = 100;
+        private const int IDLE_DELAY_MS = 10;
+        private const int CONSUMER_COUNT = 6;
+        private static CancellationTokenSource _cancellationTokenSource;
+
+        static public async Task Start()
+        {
+            Console.Title = "Analytics Service";
+            _cancellationTokenSource = new CancellationTokenSource();
+
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true;
+                Console.WriteLine("\nShutting down analytics service...");
+                _cancellationTokenSource.Cancel();
+            };
+
+            var AnalyticsConfig = new ConsumerConfig
+            {
+                BootstrapServers = BOOTSTRAP_SERVERS,
+                GroupId = "analytics-service",
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                EnableAutoCommit = true,
+                AutoCommitIntervalMs = 500,
+                SessionTimeoutMs = 10000,
+                HeartbeatIntervalMs = 3000
+            };
+
+
+            var tasks = new List<Task>();
+            for(int i = 1; i <= CONSUMER_COUNT; i++)
+            {
+                int consumerId = i;
+                tasks.Add(Task.Run(async () => await AnalyticsConsumer(AnalyticsConfig, consumerId, _cancellationTokenSource.Token)));
+            }
+
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("All consumers stopped successfully.");
+            }
+            finally
+            {
+                _cancellationTokenSource?.Dispose();
+                Console.WriteLine("Analytics service has been shut down. Press any key to exit.");
+                Console.ReadKey();
+            }
+        }
+
+        static private async Task AnalyticsConsumer(ConsumerConfig config, int consumerId, CancellationToken cancellationToken)
+        {
+            using var consumer = new ConsumerBuilder<string, string>(config).Build();
+
+            consumer.Subscribe(new List<string> {
+                    "market.prices.raw",
+                    "notifications.marketing.blast",
+                    "orders.requests.incoming",
+                    "wallet.balance.updates"
+                });
+
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        var result = consumer.Consume(TimeSpan.FromMilliseconds(CONSUME_TIMEOUT_MS));
+
+                        if (result == null)
+                        {
+                            await Task.Delay(IDLE_DELAY_MS, cancellationToken);
+                            continue;
+                        }
+
+                        if (result.Topic == "market.prices.raw")
+                        {
+                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Price Update - {result.Message.Key}: {result.Message.Value}");
+                        }
+                        else if (result.Topic == "notifications.marketing.blast")
+                        {
+                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Notification sent - {result.Message.Value}");
+                        }
+                        else if (result.Topic == "orders.requests.incoming")
+                        {
+                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
+                        }
+                        else if (result.Topic == "wallet.balance.updates")
+                        {
+                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Wallet update - {result.Message.Value}");
+                        }
+                    }
+                    catch (ConsumeException ex)
+                    {
+                        Console.WriteLine($"[Consumer {consumerId}] Consume error: {ex.Error.Reason}");
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine($"[Consumer {consumerId}] Cancellation requested");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Consumer {consumerId}] Fatal error: {ex.Message}");
+            }
+            finally
+            {
+                try
+                {
+                    consumer.Close();
+                    Console.WriteLine($"[Consumer {consumerId}] Closed successfully");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Consumer {consumerId}] Error closing: {ex.Message}");
+                }
+            }
+        }
+    }
+}
