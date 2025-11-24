@@ -2,7 +2,7 @@
 
 namespace Kafka_Consumers
 {
-    class order_execution_engine
+    class ledger_service
     {
         private static readonly string BOOTSTRAP_SERVERS = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
         private const int CONSUME_TIMEOUT_MS = 100;
@@ -12,20 +12,20 @@ namespace Kafka_Consumers
 
         static public async Task Start()
         {
-            Console.Title = "Order execution service";
+            Console.Title = "Wallet balance update service";
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
-                Console.WriteLine("\nShutting down order execution service...");
+                Console.WriteLine("\nShutting down wallet balance update service...");
                 _cancellationTokenSource.Cancel();
             };
 
-            var OrderExecutionEngineConfig = new ConsumerConfig
+            var LedgerConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
-                GroupId = "order-execution-engine",
+                GroupId = "ledger-service",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false,
                 SessionTimeoutMs = 10000,
@@ -37,7 +37,7 @@ namespace Kafka_Consumers
             for (int i = 1; i <= CONSUMER_COUNT; i++)
             {
                 int consumerId = i;
-                tasks.Add(Task.Run(async () => await OrderExecutionEngineConsumer(OrderExecutionEngineConfig, consumerId, _cancellationTokenSource.Token)));
+                tasks.Add(Task.Run(async () => await LedgerConsumer(LedgerConfig, consumerId, _cancellationTokenSource.Token)));
             }
 
             try
@@ -51,17 +51,17 @@ namespace Kafka_Consumers
             finally
             {
                 _cancellationTokenSource?.Dispose();
-                Console.WriteLine("Order execution service has been shut down. Press any key to exit.");
+                Console.WriteLine("Wallet balance update service has been shut down. Press any key to exit.");
                 Console.ReadKey();
             }
         }
 
-        static private async Task OrderExecutionEngineConsumer(ConsumerConfig config, int consumerId, CancellationToken cancellationToken)
+        static private async Task LedgerConsumer(ConsumerConfig config, int consumerId, CancellationToken cancellationToken)
         {
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
 
             consumer.Subscribe(new List<string> {
-                    "orders.requests.incoming"
+                    "wallet.balance.updates"
                 });
 
             try
@@ -111,9 +111,9 @@ namespace Kafka_Consumers
 
         private static void ConsumerWork(ConsumeResult<string, string> result, int consumerId)
         {
-            if (result.Topic == "orders.requests.incoming")
+            if (result.Topic == "wallet.balance.updates")
             {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
+                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Wallet update - {result.Message.Value}");
             }
         }
     }

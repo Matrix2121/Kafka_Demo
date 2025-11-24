@@ -22,7 +22,7 @@ namespace Kafka_Consumers
                 _cancellationTokenSource.Cancel();
             };
 
-            var AnalyticsConfig = new ConsumerConfig
+            var NotificationsConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
                 GroupId = "notification-sender-worker",
@@ -37,7 +37,7 @@ namespace Kafka_Consumers
             for(int i = 1; i <= CONSUMER_COUNT; i++)
             {
                 int consumerId = i;
-                tasks.Add(Task.Run(async () => await AnalyticsConsumer(AnalyticsConfig, consumerId, _cancellationTokenSource.Token)));
+                tasks.Add(Task.Run(async () => await NotificationsConsumer(NotificationsConfig, consumerId, _cancellationTokenSource.Token)));
             }
 
             try
@@ -56,7 +56,7 @@ namespace Kafka_Consumers
             }
         }
 
-        static private async Task AnalyticsConsumer(ConsumerConfig config, int consumerId, CancellationToken cancellationToken)
+        static private async Task NotificationsConsumer(ConsumerConfig config, int consumerId, CancellationToken cancellationToken)
         {
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
 

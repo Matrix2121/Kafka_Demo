@@ -22,7 +22,7 @@ namespace Kafka_Consumers
                 _cancellationTokenSource.Cancel();
             };
 
-            var AnalyticsConfig = new ConsumerConfig
+            var RealtimePricesStreamConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
                 GroupId = "realtime-srices-stream-ui",
@@ -37,7 +37,7 @@ namespace Kafka_Consumers
             for (int i = 1; i <= CONSUMER_COUNT; i++)
             {
                 int consumerId = i;
-                tasks.Add(Task.Run(async () => await AnalyticsConsumer(AnalyticsConfig, consumerId, _cancellationTokenSource.Token)));
+                tasks.Add(Task.Run(async () => await RealtimePricesStreamConsumer(RealtimePricesStreamConfig, consumerId, _cancellationTokenSource.Token)));
             }
 
             try
@@ -56,7 +56,7 @@ namespace Kafka_Consumers
             }
         }
 
-        static private async Task AnalyticsConsumer(ConsumerConfig config, int consumerId, CancellationToken cancellationToken)
+        static private async Task RealtimePricesStreamConsumer(ConsumerConfig config, int consumerId, CancellationToken cancellationToken)
         {
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
 
