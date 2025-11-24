@@ -2,7 +2,7 @@
 
 namespace Kafka_Consumers
 {
-    class prices_data_warehouse_archiver
+    class realtime_prices_stream_ui
     {
         private static readonly string BOOTSTRAP_SERVERS = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
         private const int CONSUME_TIMEOUT_MS = 100;
