@@ -2,7 +2,7 @@
 
 namespace Kafka_Consumers
 {
-    class notification_sender_worker
+    class order_execution_engine
     {
         private static readonly string BOOTSTRAP_SERVERS = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
         private const int CONSUME_TIMEOUT_MS = 100;
@@ -12,20 +12,20 @@ namespace Kafka_Consumers
 
         static public async Task Start()
         {
-            Console.Title = "Notification sender service";
+            Console.Title = "Order execution service";
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
-                Console.WriteLine("\nShutting down notification sender service...");
+                Console.WriteLine("\nShutting down order execution service...");
                 _cancellationTokenSource.Cancel();
             };
 
             var AnalyticsConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
-                GroupId = "notification-sender-worker",
+                GroupId = "order-execution-engine",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false,
                 SessionTimeoutMs = 10000,
@@ -34,7 +34,7 @@ namespace Kafka_Consumers
 
 
             var tasks = new List<Task>();
-            for(int i = 1; i <= CONSUMER_COUNT; i++)
+            for (int i = 1; i <= CONSUMER_COUNT; i++)
             {
                 int consumerId = i;
                 tasks.Add(Task.Run(async () => await AnalyticsConsumer(AnalyticsConfig, consumerId, _cancellationTokenSource.Token)));
@@ -51,7 +51,7 @@ namespace Kafka_Consumers
             finally
             {
                 _cancellationTokenSource?.Dispose();
-                Console.WriteLine("Notification sender service has been shut down. Press any key to exit.");
+                Console.WriteLine("Order execution service has been shut down. Press any key to exit.");
                 Console.ReadKey();
             }
         }
@@ -61,7 +61,7 @@ namespace Kafka_Consumers
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
 
             consumer.Subscribe(new List<string> {
-                    "notifications.marketing.blast"
+                    "orders.requests.incoming"
                 });
 
             try
@@ -111,9 +111,9 @@ namespace Kafka_Consumers
 
         private static void ConsumerWork(ConsumeResult<string, string> result, int consumerId)
         {
-            if (result.Topic == "notifications.marketing.blast")
+            if (result.Topic == "orders.requests.incoming")
             {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Notification sent - {result.Message.Value}");
+                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
             }
         }
     }
