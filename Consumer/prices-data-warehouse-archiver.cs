@@ -27,8 +27,7 @@ namespace Kafka_Consumers
                 BootstrapServers = BOOTSTRAP_SERVERS,
                 GroupId = "analytics-service",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = true,
-                AutoCommitIntervalMs = 500,
+                EnableAutoCommit = false,
                 SessionTimeoutMs = 10000,
                 HeartbeatIntervalMs = 3000
             };
@@ -82,22 +81,8 @@ namespace Kafka_Consumers
                             continue;
                         }
 
-                        if (result.Topic == "market.prices.raw")
-                        {
-                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Price Update - {result.Message.Key}: {result.Message.Value}");
-                        }
-                        else if (result.Topic == "notifications.marketing.blast")
-                        {
-                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Notification sent - {result.Message.Value}");
-                        }
-                        else if (result.Topic == "orders.requests.incoming")
-                        {
-                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
-                        }
-                        else if (result.Topic == "wallet.balance.updates")
-                        {
-                            Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Wallet update - {result.Message.Value}");
-                        }
+                        ConsumerWork(result, consumerId);
+                        consumer.Commit(result);
                     }
                     catch (ConsumeException ex)
                     {
@@ -124,6 +109,27 @@ namespace Kafka_Consumers
                 {
                     Console.WriteLine($"[Consumer {consumerId}] Error closing: {ex.Message}");
                 }
+            }
+        }
+
+
+        private static void ConsumerWork(ConsumeResult<string, string> result, int consumerId)
+        {
+            if (result.Topic == "market.prices.raw")
+            {
+                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Price Update - {result.Message.Key}: {result.Message.Value}");
+            }
+            else if (result.Topic == "notifications.marketing.blast")
+            {
+                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Notification sent - {result.Message.Value}");
+            }
+            else if (result.Topic == "orders.requests.incoming")
+            {
+                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
+            }
+            else if (result.Topic == "wallet.balance.updates")
+            {
+                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Wallet update - {result.Message.Value}");
             }
         }
     }
