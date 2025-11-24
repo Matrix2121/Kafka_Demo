@@ -2,30 +2,30 @@
 
 namespace Kafka_Consumers
 {
-    class analytics_service
+    class notification_sender_worker
     {
         private static readonly string BOOTSTRAP_SERVERS = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
         private const int CONSUME_TIMEOUT_MS = 100;
         private const int IDLE_DELAY_MS = 2;
-        private const int CONSUMER_COUNT = 6;
+        private const int CONSUMER_COUNT = 2;
         private static CancellationTokenSource _cancellationTokenSource;
 
         static public async Task Start()
         {
-            Console.Title = "Analytics Service";
+            Console.Title = "Notification sender service";
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
-                Console.WriteLine("\nShutting down analytics service...");
+                Console.WriteLine("\nShutting down Notification sender service...");
                 _cancellationTokenSource.Cancel();
             };
 
             var AnalyticsConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
-                GroupId = "analytics-service",
+                GroupId = "notification-sender-worker",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false,
                 SessionTimeoutMs = 10000,
@@ -51,7 +51,7 @@ namespace Kafka_Consumers
             finally
             {
                 _cancellationTokenSource?.Dispose();
-                Console.WriteLine("Analytics service has been shut down. Press any key to exit.");
+                Console.WriteLine("Notification sender service has been shut down. Press any key to exit.");
                 Console.ReadKey();
             }
         }
@@ -61,10 +61,7 @@ namespace Kafka_Consumers
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
 
             consumer.Subscribe(new List<string> {
-                    "market.prices.raw",
-                    "notifications.marketing.blast",
-                    "orders.requests.incoming",
-                    "wallet.balance.updates"
+                    "notifications.marketing.blast"
                 });
 
             try
@@ -114,21 +111,9 @@ namespace Kafka_Consumers
 
         private static void ConsumerWork(ConsumeResult<string, string> result, int consumerId)
         {
-            if (result.Topic == "market.prices.raw")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Price Update - {result.Message.Key}: {result.Message.Value}");
-            }
-            else if (result.Topic == "notifications.marketing.blast")
+            if (result.Topic == "notifications.marketing.blast")
             {
                 Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Notification sent - {result.Message.Value}");
-            }
-            else if (result.Topic == "orders.requests.incoming")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
-            }
-            else if (result.Topic == "wallet.balance.updates")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Wallet update - {result.Message.Value}");
             }
         }
     }
