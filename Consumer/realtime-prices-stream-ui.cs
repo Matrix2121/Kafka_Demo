@@ -115,18 +115,6 @@ namespace Kafka_Consumers
             {
                 Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Price Update - {result.Message.Key}: {result.Message.Value}");
             }
-            else if (result.Topic == "notifications.marketing.blast")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Notification sent - {result.Message.Value}");
-            }
-            else if (result.Topic == "orders.requests.incoming")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
-            }
-            else if (result.Topic == "wallet.balance.updates")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Wallet update - {result.Message.Value}");
-            }
         }
     }
 }

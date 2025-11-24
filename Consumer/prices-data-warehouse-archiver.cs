@@ -12,20 +12,20 @@ namespace Kafka_Consumers
 
         static public async Task Start()
         {
-            Console.Title = "Realtime prices stream service";
+            Console.Title = "Prices data warehouse service";
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
-                Console.WriteLine("\nShutting down prices stream service...");
+                Console.WriteLine("\nShutting down prices data warehouse service...");
                 _cancellationTokenSource.Cancel();
             };
 
             var AnalyticsConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
-                GroupId = "realtime-srices-stream-ui",
+                GroupId = "prices-data-warehouse-archiver",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false,
                 SessionTimeoutMs = 10000,
@@ -51,7 +51,7 @@ namespace Kafka_Consumers
             finally
             {
                 _cancellationTokenSource?.Dispose();
-                Console.WriteLine("Realtime prices stream service has been shut down. Press any key to exit.");
+                Console.WriteLine("Prices data warehouse service has been shut down. Press any key to exit.");
                 Console.ReadKey();
             }
         }
@@ -114,18 +114,6 @@ namespace Kafka_Consumers
             if (result.Topic == "market.prices.raw")
             {
                 Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Price Update - {result.Message.Key}: {result.Message.Value}");
-            }
-            else if (result.Topic == "notifications.marketing.blast")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Notification sent - {result.Message.Value}");
-            }
-            else if (result.Topic == "orders.requests.incoming")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Order placed - {result.Message.Value}");
-            }
-            else if (result.Topic == "wallet.balance.updates")
-            {
-                Console.WriteLine($"[Consumer: {consumerId}][Partition {{{result.Partition.Value}}}] Wallet update - {result.Message.Value}");
             }
         }
     }
