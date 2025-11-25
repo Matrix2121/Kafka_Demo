@@ -25,7 +25,7 @@ namespace Kafka_Consumers
             var RealtimePricesStreamConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
-                GroupId = "realtime-srices-stream-ui",
+                GroupId = "realtime-prices-stream-ui",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false,
                 SessionTimeoutMs = 10000,

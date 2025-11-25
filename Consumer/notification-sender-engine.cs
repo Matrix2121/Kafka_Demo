@@ -2,7 +2,7 @@
 
 namespace Kafka_Consumers
 {
-    class notification_sender_worker
+    class notification_sender_engine
     {
         private static readonly string BOOTSTRAP_SERVERS = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
         private const int CONSUME_TIMEOUT_MS = 100;
@@ -25,7 +25,7 @@ namespace Kafka_Consumers
             var NotificationsConfig = new ConsumerConfig
             {
                 BootstrapServers = BOOTSTRAP_SERVERS,
-                GroupId = "notification-sender-worker",
+                GroupId = "notification-sender-engine",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false,
                 SessionTimeoutMs = 10000,
