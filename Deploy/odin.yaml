@@ -1,5 +1,4 @@
 services:
-  # --- Broker 1: ODIN (Active Controller Candidate) ---
   kafka-odin:
     image: apache/kafka:3.7.0
     container_name: Odin
@@ -42,7 +41,6 @@ services:
         [PRIVATE_IP_SORA]:19092"
       KAFKA_CLUSTERS_0_PROPERTIES_REQUEST_TIMEOUT_MS: "120000" 
 
-  # --- Topic Initializer Service (Automation) ---
   kafka-init-topics:
     image: apache/kafka:3.7.0
     container_name: kafka-init-topics
